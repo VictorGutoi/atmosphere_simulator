@@ -17,12 +17,18 @@ target_include_directories(glad
     external/glad/include
 )
 
-add_executable(atmosphere
+add_executable(atmosphere_simulator
     src/main.c
+    src/math/vec3.c
+    src/math/mat4.c
+    src/graphics/camera.c
 )
 
-target_link_libraries(atmosphere
-    PRIVATE
+target_include_directories(atmosphere_simulator PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
+target_link_libraries(atmosphere_simulator PRIVATE
     glad
     glfw
     OpenGL::GL
