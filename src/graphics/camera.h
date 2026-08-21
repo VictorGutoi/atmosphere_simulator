@@ -6,18 +6,27 @@
 
 typedef struct {
     Vec3 position;
-    Vec3 target;
-    Vec3 world_up;
+
+    float yaw;
+    float pitch;
+
+    float movementSpeed;
+    float mouseSensitivity;
 } Camera;
 
-Vec3 camera_forward(Camera camera);
-Vec3 camera_right(Camera camera);
-Vec3 camera_up(Camera camera);
+Camera camera_create(Vec3 position);
 
-Mat4 camera_view(Camera camera);
+Vec3 camera_get_forward(Camera *camera);
+Vec3 camera_get_right(Camera *camera);
+Vec3 camera_get_up(Camera *camera);
+
+Mat4 camera_get_view_matrix(Camera *camera);
 
 Mat4 mat4_look_at(Vec3 position, Vec3 target, Vec3 worldUp);
 
 Mat4 mat4_perspective(float fov, float aspect, float near, float far);
+
+void camera_move_forward(Camera *camera, float deltaTime);
+void camera_move_backward(Camera *camera, float deltaTime);
 
 #endif

@@ -12,6 +12,14 @@
 #include "math/vec3.h"
 #include "graphics/camera.h"
 
+Vec3 position = { 0.0f, 0.0f, 0.0f};
+
+static Camera camera;
+
+static double lastMouseX;
+static double lastMouseY;
+static int firstMouse = 1;
+
 char *load_file(const char *path)
 {
     FILE *file = fopen(path, "rb");
@@ -40,6 +48,36 @@ char *load_file(const char *path)
     fclose(file);
 
     return buffer;
+}
+
+void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
+    if (firstMouse)
+    {
+        lastMouseX = xpos;
+        lastMouseY = ypos;
+        firstMouse = 0;
+    }
+
+    float xOffset =
+        (float)(xpos - lastMouseX);
+
+    float yOffset =
+        (float)(lastMouseY - ypos);
+
+    lastMouseX = xpos;
+    lastMouseY = ypos;
+
+    camera.yaw -=
+        xOffset * camera.mouseSensitivity;
+
+    camera.pitch -=
+        yOffset * camera.mouseSensitivity;
+
+    if (camera.pitch > 89.0f)
+        camera.pitch = 89.0f;
+
+    if (camera.pitch < -89.0f)
+        camera.pitch = -89.0f;
 }
 
 GLuint compile_shader(GLenum type, const char *source)
@@ -72,7 +110,6 @@ GLuint compile_shader(GLenum type, const char *source)
     return shader;
 }
 
-
 int main(void)
 {
     float vertices[] = {
@@ -80,12 +117,9 @@ int main(void)
         -0.5f, -0.5f, 0.0f,
          0.5f, -0.5f, 0.0f
     };
+    
 
-    Camera camera = {
-        .position = { 0.0f, 0.0f,  0.0f },
-        .target   = { 4.0f, 0.0f, -5.0f },
-        .world_up = { 0.0f, 1.0f,  0.0f }
-    };
+    camera = camera_create(position);
 
     if (!glfwInit())
     {
@@ -113,6 +147,16 @@ int main(void)
     }
 
     glfwMakeContextCurrent(window);
+    glfwSetCursorPosCallback(
+        window,
+        mouse_callback
+    );
+
+    glfwSetInputMode(
+        window,
+        GLFW_CURSOR,
+        GLFW_CURSOR_DISABLED
+    );
 
     if (!gladLoadGL((GLADloadfunc)glfwGetProcAddress))
     {
@@ -238,7 +282,7 @@ int main(void)
 
     float aspect = (float)1280 / (float)720;
     Mat4 projection = mat4_perspective(
-        60.0f * (float)M_PI / 180.0f,
+        40.0f * (float)M_PI / 180.0f,
         aspect,
         0.1f,
         100.0f
@@ -253,7 +297,7 @@ int main(void)
         projection.m
     );
 
-    Mat4 view = camera_view(camera);
+    Mat4 view = camera_get_view_matrix(&camera);
 
     glUniformMatrix4fv(
         view_location,
@@ -262,13 +306,84 @@ int main(void)
         view.m
     );
 
+    static float previousTime = 0.0f;
     while (!glfwWindowShouldClose(window))
     {
         int width;
         int height;
         
         double time = glfwGetTime();
+        
+        float deltaTime =
+            time - previousTime;
 
+        previousTime = time;
+
+        // MOVEMVENT DETECION
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        {
+            Vec3 forward = camera_get_forward(&camera);
+
+            camera.position = vec3_add(
+                camera.position,
+                vec3_scale(
+                    forward,
+                    camera.movementSpeed * deltaTime
+                )
+            );
+        }
+
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        {
+            Vec3 forward = camera_get_forward(&camera);
+
+            camera.position = vec3_add(
+                camera.position,
+                vec3_scale(
+                    forward,
+                    -camera.movementSpeed * deltaTime
+                )
+            );
+        }
+        
+        Vec3 right = camera_get_right(&camera);
+        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+            {
+                Vec3 right = camera_get_right(&camera);
+
+                camera.position = vec3_add(
+                    camera.position,
+                    vec3_scale(
+                        right,
+                        -camera.movementSpeed * deltaTime
+                    )
+                );
+            }
+
+            if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+            {
+                Vec3 right = camera_get_right(&camera);
+
+                camera.position = vec3_add(
+                    camera.position,
+                    vec3_scale(
+                        right,
+                        camera.movementSpeed * deltaTime
+                    )
+                );
+            }
+
+        //UPDATE MATRIX
+        Mat4 view = camera_get_view_matrix(&camera);
+
+        glUniformMatrix4fv(
+            view_location,
+            1,
+            GL_FALSE,
+            view.m
+        );
+        
+        //REDNER STUFF
         glfwGetFramebufferSize(
             window,
             &width,
