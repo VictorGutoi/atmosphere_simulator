@@ -102,6 +102,53 @@ Mat4 mat4_rotate_x(float angle)
     return result;
 }
 
+Mat4 mat4_translate(float x, float y, float z)
+{
+    Mat4 result = mat4_identity();
+
+    result.m[12] = x;
+    result.m[13] = y;
+    result.m[14] = z;
+
+    return result;
+}
+
+Mat4 mat4_multiply(Mat4 a, Mat4 b)
+{
+    Mat4 result = {0};
+
+    for (int column = 0; column < 4; column++)
+    {
+        for (int row = 0; row < 4; row++)
+        {
+            result.m[column * 4 + row] =
+                a.m[0 * 4 + row] * b.m[column * 4 + 0] +
+                a.m[1 * 4 + row] * b.m[column * 4 + 1] +
+                a.m[2 * 4 + row] * b.m[column * 4 + 2] +
+                a.m[3 * 4 + row] * b.m[column * 4 + 3];
+        }
+    }
+
+    return result;
+}
+
+Mat4 mat4_perspective(float fov, float aspect, float near, float far)
+{
+    Mat4 result = {0};
+
+    float f = 1.0f / tanf(fov / 2.0f);
+
+    result.m[0] = f / aspect;
+    result.m[5] = f;
+
+    result.m[10] = (far + near) / (near - far);
+    result.m[11] = -1.0f;
+
+    result.m[14] = (2.0f * far * near) / (near - far);
+
+    return result;
+}
+
 GLuint compile_shader(GLenum type, const char *source)
 {
     GLuint shader = glCreateShader(type);
@@ -216,9 +263,14 @@ int main(void)
     );
 
     // Vertex Shader uniforms
-    GLint modelLoc = glGetUniformLocation(
+    GLint model_location = glGetUniformLocation(
         shader_program, 
         "uModel"
+    );
+
+    GLint projection_location = glGetUniformLocation(
+        shader_program, 
+        "uProjection"
     );
 
     GLint success;
@@ -280,10 +332,28 @@ int main(void)
 
     glEnableVertexAttribArray(0);
 
+    float aspect = (float)1280 / (float)720;
+    Mat4 projection = mat4_perspective(
+        60.0f * (float)M_PI / 180.0f,
+        aspect,
+        0.1f,
+        100.0f
+    );
+
+    glUseProgram(shader_program);
+
+    glUniformMatrix4fv(
+        projection_location,
+        1,
+        GL_FALSE,
+        projection.m
+    );
+
     while (!glfwWindowShouldClose(window))
     {
         int width;
         int height;
+        
         double time = glfwGetTime();
 
         glfwGetFramebufferSize(
@@ -302,10 +372,7 @@ int main(void)
         glClear(GL_COLOR_BUFFER_BIT);
 
         glUseProgram(shader_program);
-
         glBindVertexArray(VAO);
-
-        glUseProgram(shader_program);
 
         glUniform2f(
             resolution_location,
@@ -318,11 +385,10 @@ int main(void)
             (float)time
         );
 
-        Mat4 model = mat4_rotate_x((float)glfwGetTime());
-
+        Mat4 model = mat4_translate(1.0, .0, -2.0);
 
         glUniformMatrix4fv(
-            modelLoc,
+            model_location,
             1,
             GL_FALSE,
             model.m
