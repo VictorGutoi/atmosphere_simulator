@@ -139,6 +139,16 @@ int main(void)
     glAttachShader(shader_program, fragment_shader);
 
     glLinkProgram(shader_program);
+    
+    GLint resolution_location = glGetUniformLocation(
+        shader_program,
+        "uResolution"
+    );
+
+    GLint time_location = glGetUniformLocation(
+        shader_program,
+        "uTime"
+    );
 
     GLint success;
     glGetProgramiv(
@@ -201,11 +211,41 @@ int main(void)
 
     while (!glfwWindowShouldClose(window))
     {
+        int width;
+        int height;
+        double time = glfwGetTime();
+
+        glfwGetFramebufferSize(
+            window,
+            &width,
+            &height
+        );
+
+        glViewport(
+            0,
+            0,
+            width,
+            height
+        );
+
         glClear(GL_COLOR_BUFFER_BIT);
 
         glUseProgram(shader_program);
 
         glBindVertexArray(VAO);
+
+        glUseProgram(shader_program);
+
+        glUniform2f(
+            resolution_location,
+            (float)width,
+            (float)height
+        );
+
+        glUniform1f(
+            time_location,
+            (float)time
+        );
 
         glDrawArrays(
             GL_TRIANGLES,
