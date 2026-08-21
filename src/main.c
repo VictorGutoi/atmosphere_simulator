@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 #include <glad/gl.h>
 
@@ -37,6 +38,70 @@ char *load_file(const char *path)
     return buffer;
 }
 
+typedef struct {
+    float m[16];
+} Mat4;
+
+Mat4 mat4_identity(void)
+{
+    Mat4 result = {0};
+
+    result.m[0]  = 1.0f;
+    result.m[5]  = 1.0f;
+    result.m[10] = 1.0f;
+    result.m[15] = 1.0f;
+
+    return result;
+}
+
+Mat4 mat4_rotate_y(float angle)
+{
+    Mat4 result = mat4_identity();
+
+    float c = cosf(angle);
+    float s = sinf(angle);
+
+    result.m[0]  = c;
+    result.m[2]  = -s;
+
+    result.m[8]  = s;
+    result.m[10] = c;
+
+    return result;
+}
+
+Mat4 mat4_rotate_z(float angle)
+{
+    Mat4 result = mat4_identity();
+
+    float c = cosf(angle);
+    float s = sinf(angle);
+
+    result.m[0]  = c;
+    result.m[1]  = -s;
+
+    result.m[4]  = s;
+    result.m[5] = c;
+
+    return result;
+}
+
+Mat4 mat4_rotate_x(float angle)
+{
+    Mat4 result = mat4_identity();
+
+    float c = cosf(angle);
+    float s = sinf(angle);
+
+    result.m[5]  = c;
+    result.m[6]  = -s;
+
+    result.m[9]  = s;
+    result.m[10] = c;
+
+    return result;
+}
+
 GLuint compile_shader(GLenum type, const char *source)
 {
     GLuint shader = glCreateShader(type);
@@ -71,9 +136,9 @@ GLuint compile_shader(GLenum type, const char *source)
 int main(void)
 {
     float vertices[] = {
-        0.0f,  0.5f, 0.0f,
+         0.0f,  0.5f, 0.0f,
         -0.5f, -0.5f, 0.0f,
-        0.5f, -0.5f, 0.0f
+         0.5f, -0.5f, 0.0f
     };
 
     if (!glfwInit())
@@ -140,14 +205,20 @@ int main(void)
 
     glLinkProgram(shader_program);
     
+    // Fragment Shader uniforms
     GLint resolution_location = glGetUniformLocation(
         shader_program,
         "uResolution"
     );
-
     GLint time_location = glGetUniformLocation(
         shader_program,
         "uTime"
+    );
+
+    // Vertex Shader uniforms
+    GLint modelLoc = glGetUniformLocation(
+        shader_program, 
+        "uModel"
     );
 
     GLint success;
@@ -245,6 +316,16 @@ int main(void)
         glUniform1f(
             time_location,
             (float)time
+        );
+
+        Mat4 model = mat4_rotate_x((float)glfwGetTime());
+
+
+        glUniformMatrix4fv(
+            modelLoc,
+            1,
+            GL_FALSE,
+            model.m
         );
 
         glDrawArrays(

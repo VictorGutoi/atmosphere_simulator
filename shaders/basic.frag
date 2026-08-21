@@ -10,13 +10,12 @@ void main() {
 
     float red   = 0.5 + 0.5 * sin(uTime);
     float green = 0.5 + 0.5 * sin(uTime*2);
-    float blue  = 0.5 + 0.5 * sin(uTime*3);
     
 
     FragColor = vec4(
-        uv.x*red, 
-        uv.y*green,
-        (1.0 - uv.x)*blue,
+        red, 
+        green,
+        1.0 - uv.x,
         1.0
     ); 
 }
