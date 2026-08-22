@@ -11,8 +11,9 @@
 #include "math/mat4.h"
 #include "math/vec3.h"
 #include "graphics/camera.h"
+#include "graphics/mesh.h"
 
-Vec3 position = { 0.0f, 0.0f, 0.0f};
+Vec3 position = {0.0f, 0.0f, 0.0f};
 
 static Camera camera;
 
@@ -67,10 +68,10 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
     lastMouseX = xpos;
     lastMouseY = ypos;
 
-    camera.yaw -=
+    camera.yaw +=
         xOffset * camera.mouseSensitivity;
 
-    camera.pitch -=
+    camera.pitch +=
         yOffset * camera.mouseSensitivity;
 
     if (camera.pitch > 89.0f)
@@ -110,15 +111,7 @@ GLuint compile_shader(GLenum type, const char *source)
     return shader;
 }
 
-int main(void)
-{
-    float vertices[] = {
-         0.0f,  0.5f, 0.0f,
-        -0.5f, -0.5f, 0.0f,
-         0.5f, -0.5f, 0.0f
-    };
-    
-
+int main(void) {
     camera = camera_create(position);
 
     if (!glfwInit())
@@ -168,6 +161,15 @@ int main(void)
 
     printf("OpenGL version: %s\n", glGetString(GL_VERSION));
     printf("GLSL version: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
+    // GLAD LOADED - CALL FUNCITONS AFTER
+
+    glEnable(GL_DEPTH_TEST);
+
+    Mesh sphere = mesh_create_sphere(
+        2.0f,
+        32,
+        32
+    );
 
     char *vertex_source = load_file("shaders/basic.vert");
     char *fragment_source = load_file("shaders/basic.frag");
@@ -250,39 +252,9 @@ int main(void)
     free(vertex_source);
     free(fragment_source);
 
-    GLuint VBO;
-
-    glGenBuffers(1, &VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-    glBufferData(
-        GL_ARRAY_BUFFER,
-        sizeof(vertices),
-        vertices,
-        GL_STATIC_DRAW
-    );
-
-    GLuint VAO;
-
-    glGenVertexArrays(1, &VAO);
-    glBindVertexArray(VAO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-    glVertexAttribPointer(
-        0,
-        3,
-        GL_FLOAT,
-        GL_FALSE,
-        3 * sizeof(float),
-        (void *)0
-    );
-
-    glEnableVertexAttribArray(0);
-
     float aspect = (float)1280 / (float)720;
     Mat4 projection = mat4_perspective(
-        40.0f * (float)M_PI / 180.0f,
+        60.0f * (float)M_PI / 180.0f,
         aspect,
         0.1f,
         100.0f
@@ -397,10 +369,9 @@ int main(void)
             height
         );
 
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glUseProgram(shader_program);
-        glBindVertexArray(VAO);
 
         glUniform2f(
             resolution_location,
@@ -413,7 +384,7 @@ int main(void)
             (float)time
         );
 
-        Mat4 model = mat4_translate(.0f, .0f, -5.0f);
+        Mat4 model = mat4_translate(0.0f, 0.0f, -5.0f);
 
         glUniformMatrix4fv(
             model_location,
@@ -422,16 +393,13 @@ int main(void)
             model.m
         );
 
-        glDrawArrays(
-            GL_TRIANGLES,
-            0,
-            3
-        );
+        mesh_draw(&sphere);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
+    mesh_destroy(&sphere);
     glfwDestroyWindow(window);
     glfwTerminate();
 

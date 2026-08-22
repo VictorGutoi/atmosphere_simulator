@@ -22,6 +22,7 @@ add_executable(atmosphere_simulator
     src/math/vec3.c
     src/math/mat4.c
     src/graphics/camera.c
+    src/graphics/mesh.c
 )
 
 target_include_directories(atmosphere_simulator PRIVATE
