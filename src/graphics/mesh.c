@@ -12,7 +12,7 @@ Mesh mesh_create_sphere(float radius, unsigned int latitudeSegments, unsigned in
 
     unsigned int indexCount = latitudeSegments * longitudeSegments * 6;
 
-    float *vertices = malloc(vertexCount * 3 * sizeof(float));
+    float *vertices = malloc(vertexCount * 6 * sizeof(float));
 
     unsigned int *indices = malloc(indexCount * sizeof(unsigned int));
 
@@ -45,14 +45,20 @@ Mesh mesh_create_sphere(float radius, unsigned int latitudeSegments, unsigned in
             float cosPhi = cosf(phi);
 
             float x = radius * sinTheta * cosPhi;
-
             float y = radius * cosTheta;
-
             float z = radius * sinTheta * sinPhi;
+
+            float nx = x / radius;
+            float ny = y / radius;
+            float nz = z / radius;
 
             vertices[vertexIndex++] = x;
             vertices[vertexIndex++] = y;
             vertices[vertexIndex++] = z;
+
+            vertices[vertexIndex++] = nx;
+            vertices[vertexIndex++] = ny;
+            vertices[vertexIndex++] = nz;
         }
     }
 
@@ -86,7 +92,7 @@ Mesh mesh_create_sphere(float radius, unsigned int latitudeSegments, unsigned in
 
     glBufferData(
         GL_ARRAY_BUFFER,
-        vertexCount * 3 * sizeof(float),
+        vertexCount * 6 * sizeof(float),
         vertices,
         GL_STATIC_DRAW
     );
@@ -105,11 +111,21 @@ Mesh mesh_create_sphere(float radius, unsigned int latitudeSegments, unsigned in
         3,
         GL_FLOAT,
         GL_FALSE,
-        3 * sizeof(float),
+        6 * sizeof(float),
         (void*)0
     );
+    glVertexAttribPointer(
+        1,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        6 * sizeof(float),
+        (void*)(3 * sizeof(float))
+    );
+
 
     glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
 
     free(vertices);
     free(indices);

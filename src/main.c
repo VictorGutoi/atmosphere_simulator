@@ -196,32 +196,6 @@ int main(void) {
     glAttachShader(shader_program, fragment_shader);
 
     glLinkProgram(shader_program);
-    
-    // Fragment Shader uniforms
-    GLint resolution_location = glGetUniformLocation(
-        shader_program,
-        "uResolution"
-    );
-    GLint time_location = glGetUniformLocation(
-        shader_program,
-        "uTime"
-    );
-
-    // Vertex Shader uniforms
-    GLint model_location = glGetUniformLocation(
-        shader_program, 
-        "uModel"
-    );
-
-    GLint projection_location = glGetUniformLocation(
-        shader_program, 
-        "uProjection"
-    );
-
-    GLint view_location = glGetUniformLocation(
-        shader_program, 
-        "uView"
-    );
 
     GLint success;
     glGetProgramiv(
@@ -245,6 +219,29 @@ int main(void) {
 
         return 1;
     }
+    
+    // Fragment Shader uniforms
+    GLint light_direction_location = glGetUniformLocation(
+        shader_program,
+        "uLightDirection"
+    );
+
+    // Vertex Shader uniforms
+    GLint model_location = glGetUniformLocation(
+        shader_program, 
+        "uModel"
+    );
+
+    GLint projection_location = glGetUniformLocation(
+        shader_program, 
+        "uProjection"
+    );
+
+    GLint view_location = glGetUniformLocation(
+        shader_program, 
+        "uView"
+    );
+
 
     glDeleteShader(vertex_shader);
     glDeleteShader(fragment_shader);
@@ -276,6 +273,19 @@ int main(void) {
         1,
         GL_FALSE,
         view.m
+    );
+
+    Vec3 light_direction = {
+        -1.0f,
+        1.0f,
+        1.0f
+    };
+
+    glUniform3f(
+        light_direction_location,
+        light_direction.x,
+        light_direction.y,
+        light_direction.z
     );
 
     static float previousTime = 0.0f;
@@ -372,17 +382,6 @@ int main(void) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glUseProgram(shader_program);
-
-        glUniform2f(
-            resolution_location,
-            (float)width,
-            (float)height
-        );
-
-        glUniform1f(
-            time_location,
-            (float)time
-        );
 
         Mat4 model = mat4_translate(0.0f, 0.0f, -5.0f);
 
